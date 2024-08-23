@@ -41,7 +41,6 @@ static void	*handleDatagrams(void *parm)
 	int			bundleLength;
 	struct sockaddr_in	fromAddr;
 	unsigned int		hostNbr;
-	char			hostName[MAXHOSTNAMELEN + 1];
 
 	snooze(1);	/*	Let main thread become interruptible.	*/
 	work = bpGetAcqArea(rtp->vduct);
@@ -85,7 +84,6 @@ static void	*handleDatagrams(void *parm)
 		}
 
 		hostNbr = ntohl(fromAddr.sin_addr.s_addr);
-		printDottedString(hostNbr, hostName);
 		if (bpBeginAcq(work, 0, NULL) < 0
 		|| bpContinueAcq(work, buffer, bundleLength, 0, 0) < 0
 		|| bpEndAcq(work) < 0)
