@@ -53,6 +53,10 @@ bping
 bplist
 bprecvfile
 bpsendfile
+recvfile
+sendfile
+bprecvtest
+bpsendtest
 bpsink
 bpsource
 bpstats
