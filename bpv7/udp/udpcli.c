@@ -84,9 +84,7 @@ static void	*handleDatagrams(void *parm)
 			break;			/*	Out of switch.	*/
 		}
 
-		memcpy((char *) &hostNbr,
-				(char *) &(fromAddr.sin_addr.s_addr), 4);
-		hostNbr = ntohl(hostNbr);
+		hostNbr = ntohl(fromAddr.sin_addr.s_addr);
 		printDottedString(hostNbr, hostName);
 		if (bpBeginAcq(work, 0, NULL) < 0
 		|| bpContinueAcq(work, buffer, bundleLength, 0, 0) < 0
@@ -194,7 +192,7 @@ int	main(int argc, char *argv[])
 	inetName = (struct sockaddr_in *) &socketName;
 	inetName->sin_family = AF_INET;
 	inetName->sin_port = portNbr;
-	memcpy((char *) &(inetName->sin_addr.s_addr), (char *) &hostNbr, 4);
+	inetName->sin_addr.s_addr = hostNbr;
 	rtp.ductSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (rtp.ductSocket < 0)
 	{
