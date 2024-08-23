@@ -816,7 +816,7 @@ static int	raisePlan(Object planElt, BpVdb *bpvdb)
 	vplan->planElt = planElt;
 	vplan->stats = plan.stats;
 	vplan->updateStats = plan.updateStats;
-	istrcpy(vplan->neighborEid, plan.neighborEid, sizeof plan.neighborEid);
+	istrcpy(vplan->neighborEid, plan.neighborEid, sizeof vplan->neighborEid);
 	vplan->neighborNodeNbr = plan.neighborNodeNbr;
 	vplan->semaphore = SM_SEM_NONE;
 	vplan->xmitThrottle.nominalRate = plan.nominalRate;
