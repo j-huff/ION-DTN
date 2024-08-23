@@ -117,7 +117,7 @@ int	main(int argc, char *argv[])
 	inetName = (struct sockaddr_in *) &socketName;
 	inetName->sin_family = AF_INET;
 	inetName->sin_port = portNbr;
-	memcpy((char *) &(inetName->sin_addr.s_addr), (char *) &hostNbr, 4);
+	inetName->sin_addr.s_addr = hostNbr;
 	if (bpAttach() < 0)
 	{
 		putErrmsg("udpclo can't attach to BP.", NULL);
