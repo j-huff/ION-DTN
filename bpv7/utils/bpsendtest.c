@@ -309,16 +309,25 @@ int	main(int argc, char **argv)
 	if(!isfilename){
 		numbytes = atoi(argv[++i]);
 		if(numbytes < 1) usage(argv[0], "<file> must be positive integer when using -nofile option.");
-		makegarbagefile(numbytes);
-		if(getcwd(fileName, sizeof(fileName))) {
-			if(*(fileName + strlen(fileName)-1) != '/') strcat(fileName, "/");
-			strcat(fileName, FILENAME);
-		} else {
+		if(!getcwd(fileName, sizeof(fileName))) {
 			perror("getcwd");
 			exit(-1);
 		}
+		/* Append trailing '/' if needed */
+		if(*(fileName + strlen(fileName) - 1) != '/') {
+			if (strlen(fileName) + 1 >= sizeof(fileName))
+				usage(argv[0], "File path too long");
+			strcat(fileName, "/");
+		}
+		if (strlen(fileName) + strlen(FILENAME) >= sizeof(fileName))
+			usage(argv[0], "File path too long");
+		strcat(fileName, FILENAME);
+		makegarbagefile(numbytes);
 	} else {
-		strcpy(fileName, argv[++i]);
+		i++;
+		if strlen(argv[i]) >= sizeof(fileName)
+			usage(argv[0], "File path too long");
+		strcpy(fileName, argv[i]);
 	}
 
 	if (!(ownEid && destEid && strlen(fileName)))
