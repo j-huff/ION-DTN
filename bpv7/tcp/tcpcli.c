@@ -18,6 +18,9 @@
 #define	TCPCL_BUFSZ		(64 * 1024)
 #endif
 
+#define MAX_SEG_HEADER_SIZE 11
+#define TCPCL_DATA_BUFSZ (TCPCL_BUFSZ - MAX_SEG_HEADER_SIZE)
+
 #ifndef MAX_RESCAN_INTERVAL
 #if defined (TCPCL_LOW_CYCLE)
 #define MAX_RESCAN_INTERVAL	(240)
@@ -246,6 +249,7 @@ typedef struct
 {
 	TcpclSession	*session;
 	char		*buffer;
+  char    *buffer_offset;
 	Outflow		outflows[3];
 } SenderThreadParms;
 
@@ -894,9 +898,9 @@ pipeline.", session->outductName);
 	while (bytesRemaining > 0)
 	{
 		bytesToLoad = bytesRemaining;
-		if (bytesToLoad > TCPCL_BUFSZ)
+		if (bytesToLoad > TCPCL_DATA_BUFSZ)
 		{
-			bytesToLoad = TCPCL_BUFSZ;
+			bytesToLoad = TCPCL_DATA_BUFSZ;
 		}
 		else
 		{
@@ -905,7 +909,7 @@ pipeline.", session->outductName);
 
 		CHKERR(sdr_begin_xn(sdr));
 		bytesToSend = zco_transmit(sdr, &reader, bytesToLoad,
-				stp->buffer);
+				stp->buffer_offset);
 		if (sdr_end_xn(sdr) < 0 || bytesToSend != bytesToLoad)
 		{
 			putErrmsg("Incomplete zco_transmit.",
@@ -918,16 +922,10 @@ pipeline.", session->outductName);
 		encodeSdnv(&segLengthSdnv, bytesToLoad);
 		memcpy(segHeader + 1, segLengthSdnv.text, segLengthSdnv.length);
 		segHeaderLen = 1 + segLengthSdnv.length;
-		pthread_mutex_lock(&(session->socketMutex));
-		if (itcp_send(&(session->sock), segHeader, segHeaderLen) < 1)
-		{
-			pthread_mutex_unlock(&(session->socketMutex));
-			writeMemoNote("[?] tcpcl session lost (seg header)",
-					neighbor->vplan->neighborEid);
-			return 0;
-		}
 
-		if (itcp_send(&(session->sock), stp->buffer, bytesToSend) < 1)
+    memcpy(stp->buffer_offset - segHeaderLen, segHeader, segHeaderLen);
+//pthread_mutex_lock(&(session->socketMutex));
+		if (itcp_send(&(session->sock), stp->buffer_offset - segHeaderLen, bytesToSend + segHeaderLen) < 1)
 		{
 			pthread_mutex_unlock(&(session->socketMutex));
 			writeMemoNote("[?] tcpcl session lost (seg content)",
@@ -935,7 +933,7 @@ pipeline.", session->outductName);
 			return 0;
 		}
 
-		pthread_mutex_unlock(&(session->socketMutex));
+//pthread_mutex_unlock(&(session->socketMutex));
 		flags = 0x00;			/*	No longer 1st.	*/
 		bytesRemaining -= bytesToSend;
 	}
@@ -1019,6 +1017,7 @@ static void	*sendBundles(void *parm)
 		ionKillMainThread(procName());
 		return NULL;
 	}
+  stp->buffer_offset = stp->buffer + MAX_SEG_HEADER_SIZE;
 
 	/*	Ready to start sending bundles.				*/
 
